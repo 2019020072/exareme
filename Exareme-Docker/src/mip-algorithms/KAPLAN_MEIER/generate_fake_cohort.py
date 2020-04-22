@@ -65,8 +65,8 @@ def patients():
     for i, visit in enumerate(visits):
         visit_id = fake.md5()
         age = get_age(birth_date, visit)
-        if can_get_sick and age >= 65 and alzheimerbroadcategory == "MCI":
-            prob = 2 ** ((age - 65) // 5) * 0.3
+        if can_get_sick and age >= 62 and alzheimerbroadcategory == "MCI":
+            prob = 2 ** ((age - 62) // 2) * 0.3
             r = np.random.random()
             if r <= prob:
                 alzheimerbroadcategory = "AD"
