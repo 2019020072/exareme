@@ -1,28 +1,46 @@
 from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import json
 import re
 import sqlite3
+from datetime import datetime
+import matplotlib.pyplot as plt
 
 import numpy as np
 import pandas as pd
 from lifelines import KaplanMeierFitter
 
-from utils.algorithm_utils import make_json_raw, TransferAndAggregateData, PRIVACY_MAGIC_NUMBER, PrivacyError
+from utils.algorithm_utils import (
+    make_json_raw,
+    TransferAndAggregateData,
+    PRIVACY_MAGIC_NUMBER,
+    PrivacyError,
+)
+
+
+def read_csv(bin_var, outcome_pos, outcome_neg):
+    data = pd.read_csv("alzheimer_fake_cohort.csv")
+    data = data.dropna()
+    data = data[(data[bin_var] == outcome_pos) | (data[bin_var] == outcome_neg)]
+    levels = list(set(data["apoe4"]))
+    data_dict = {level: data[data["apoe4"] == level] for level in levels}
+    return data_dict
 
 
 def query_longitudinal(query, input_local_DB):
-    # fixme The following is a hack for querying longitudinal data, should be done by Exareme
-    _, sel_head, sel_tail = re.split(r'(select )', query)
-    query = sel_head + 'subjectcode, subjectvisitdate, subjectage, ' + sel_tail
+    # fixme The following is a hack for querying longitudinal data,
+    #  should be done by Exareme
+    _, sel_head, sel_tail = re.split(r"(select )", query)
+    query = sel_head + "subjectcode, subjectvisitdate, subjectage, " + sel_tail
     con = sqlite3.connect(input_local_DB)
     data = pd.read_sql(query, con=con)
-    data.replace('', np.nan, inplace=True)  # fixme remove when no empty str in dbs
+    data.replace("", np.nan, inplace=True)  # fixme remove when no empty str in dbs
     data = data.dropna()
     # Privacy check
     if len(data) < PRIVACY_MAGIC_NUMBER:
-        raise PrivacyError('Query results in illegal number of datapoints.')
+        raise PrivacyError("Query results in illegal number of datapoints.")
     return data
 
 
@@ -35,11 +53,24 @@ def get_data(args):
     db_query = args.db_query
 
     # Get data and build timelines
-    data = query_longitudinal(db_query, input_local_DB)
-    data = data[(data[bin_var] == outcome_pos) | (data[bin_var] == outcome_neg)]
-    timelines = build_timelines(data, time_axis='subjectage', var=bin_var)
+    # data = query_longitudinal(db_query, input_local_DB)  # todo uncomment for exareme
+    data_dict = read_csv(bin_var, outcome_pos, outcome_neg)
+    timelines_dict = {
+        k: build_timelines(d, time_axis="subjectvisitdate", var=bin_var)
+        for k, d in data_dict.items()
+    }
 
-    # Convert timelines to (events, durations)
+    durations_dict = {}
+    events_dict = {}
+    for k, tl in timelines_dict.items():
+        durations_dict[k], events_dict[k] = convert_timelines_to_events(
+            max_age, outcome_pos, tl
+        )
+
+    return events_dict, durations_dict, max_age
+
+
+def convert_timelines_to_events(max_age, outcome_pos, timelines):
     events = []
     durations = []
     for tl in timelines:
@@ -52,157 +83,156 @@ def get_data(args):
             duration = max_age
         events.append(event)
         durations.append(duration)
-
     events = np.array(events)
     durations = np.array(durations)
-
-    return events, durations, max_age
+    return durations, events
 
 
 def local_1(local_in):
     # Unpack data
-    events, durations, max_duration = local_in
+    events_dict, durations_dict, max_duration = local_in
 
-    # Sort events by ascending duration
-    idx = np.argsort(durations)
-    events = events[idx]
-    durations = durations[idx]
+    grouped_durations_observed_dict = {}
+    grouped_durations_non_observed_dict = {}
+    for key, events in events_dict.items():
+        durations = durations_dict[key]
+        # Sort events by ascending duration
+        idx = np.argsort(durations)
+        events = events[idx]
+        durations = durations[idx]
 
-    # Split events into observed and non_observed groups
-    durations_observed = np.array([d for d, e in zip(durations, events) if e == 1])
-    durations_non_observed = np.array([max_duration for e in events if e == 0])
+        # Split events into observed and non_observed groups
+        durations_observed = np.array([d for d, e in zip(durations, events) if e == 1])
+        durations_non_observed = np.array([max_duration for e in events if e == 0])
 
-    # Remove some observations at random to allow grouping (see below)
-    n_rem_o = len(durations_observed) % PRIVACY_MAGIC_NUMBER
-    if n_rem_o:
-        idx_rem = np.random.permutation(len(durations_observed))[:n_rem_o]
-        durations_observed = np.delete(durations_observed, idx_rem)
+        # Remove some observations at random to allow grouping (see below)
+        n_rem_o = len(durations_observed) % PRIVACY_MAGIC_NUMBER
+        if n_rem_o:
+            idx_rem = np.random.permutation(len(durations_observed))[:n_rem_o]
+            durations_observed = np.delete(durations_observed, idx_rem)
 
-    n_rem_n = len(durations_non_observed) % PRIVACY_MAGIC_NUMBER
-    if n_rem_n:
-        idx_rem = np.random.permutation(len(durations_non_observed))[:n_rem_n]
-        durations_non_observed = np.delete(durations_non_observed, idx_rem)
+        n_rem_n = len(durations_non_observed) % PRIVACY_MAGIC_NUMBER
+        if n_rem_n:
+            idx_rem = np.random.permutation(len(durations_non_observed))[:n_rem_n]
+            durations_non_observed = np.delete(durations_non_observed, idx_rem)
 
-    # Group observations by multiples of PRIVACY_MAGIC_NUMBER
-    grouped_durations_observed = []
-    for group in durations_observed.reshape(-1, PRIVACY_MAGIC_NUMBER):
-        grouped_durations_observed += [group[-1]]
-    grouped_durations_non_observed = []
-    for group in durations_non_observed.reshape(-1, PRIVACY_MAGIC_NUMBER):
-        grouped_durations_non_observed += [group[-1]]
+        # Group observations by multiples of PRIVACY_MAGIC_NUMBER
+        grouped_durations_observed_dict[key] = []
+        for group in durations_observed.reshape(-1, PRIVACY_MAGIC_NUMBER):
+            grouped_durations_observed_dict[key] += [group[-1]]
+        grouped_durations_non_observed_dict[key] = []
+        for group in durations_non_observed.reshape(-1, PRIVACY_MAGIC_NUMBER):
+            grouped_durations_non_observed_dict[key] += [group[-1]]
 
-    local_out = TransferAndAggregateData(grouped_durations_observed=(grouped_durations_observed, 'concat'),
-                                         grouped_durations_non_observed=(grouped_durations_non_observed, 'concat'))
+    local_out = TransferAndAggregateData(
+        grouped_durations_observed=(grouped_durations_observed_dict, "concat"),
+        grouped_durations_non_observed=(grouped_durations_non_observed_dict, "concat"),
+    )
 
     return local_out
 
 
 def global_1(global_in):
     data = global_in.get_data()
-    grouped_durations_observed = data['grouped_durations_observed']
-    grouped_durations_non_observed = data['grouped_durations_non_observed']
+    grouped_durations_observed_dict = data["grouped_durations_observed"]
+    grouped_durations_non_observed_dict = data["grouped_durations_non_observed"]
 
-    # Expand observations groups
-    durations = []
-    events = []
-    for d in grouped_durations_observed:
-        durations += [d] * PRIVACY_MAGIC_NUMBER
-        events += [1] * PRIVACY_MAGIC_NUMBER
-    for d in grouped_durations_non_observed:
-        durations += [d] * PRIVACY_MAGIC_NUMBER
-        events += [0] * PRIVACY_MAGIC_NUMBER
+    survival_function_dict = {}
+    confidence_interval_dict = {}
+    timeline_dict = {}
+    for key in grouped_durations_observed_dict.keys():
+        grouped_durations_observed = grouped_durations_observed_dict[key]
+        grouped_durations_non_observed = grouped_durations_non_observed_dict[key]
+        # Expand observations groups
+        durations = []
+        events = []
+        for d in grouped_durations_observed:
+            durations += [d] * PRIVACY_MAGIC_NUMBER
+            events += [1] * PRIVACY_MAGIC_NUMBER
+        for d in grouped_durations_non_observed:
+            durations += [d] * PRIVACY_MAGIC_NUMBER
+            events += [0] * PRIVACY_MAGIC_NUMBER
 
-    durations = np.array(durations, dtype=np.float)
-    events = np.array(events, dtype=np.int)
+        durations = np.array(durations, dtype=np.float)
+        events = np.array(events, dtype=np.int)
 
-    kmf = KaplanMeierFitter()
-    kmf.fit(durations=durations, event_observed=events)
+        kmf = KaplanMeierFitter()
+        kmf.fit(durations=durations, event_observed=events)
 
-    survival_function = kmf.survival_function_
-    confidence_interval = kmf.confidence_interval_
-    confidence_interval = confidence_interval.iloc[1:, :].values.tolist()
-    ci_tmp = [[1.0, 1.0]]
-    ci_tmp.extend(confidence_interval)
-    confidence_interval = ci_tmp
-    timeline = kmf.timeline
+        # *****************************************
+        # kmf.plot()
+        # plt.xlim(0, 3*365)  # TODO Remove these lines
+        # plt.show()
+        # *****************************************
+
+        survival_function_dict[key] = list(kmf.survival_function_.iloc[:, 0])
+        confidence_interval_dict[key] = kmf.confidence_interval_.iloc[
+            1:, :
+        ].values.tolist()
+        ci_tmp = [[1.0, 1.0]]
+        ci_tmp.extend(confidence_interval_dict[key])
+        confidence_interval_dict[key] = ci_tmp
+        timeline_dict[key] = kmf.timeline.tolist()
 
     # Pack results into corresponding object
-    result = KaplanMeierResult(survival_function.values.flatten(), confidence_interval, timeline)
+    result = KaplanMeierResult(
+        survival_function_dict, confidence_interval_dict, timeline_dict
+    )
     output = result.get_output()
 
     # Print output not allowing nans
     try:
         global_out = json.dumps(output, allow_nan=False, indent=4)
     except ValueError:
-        raise ValueError('Result contains NaNs.')
+        raise ValueError("Result contains NaNs.")
     return global_out
 
 
 class KaplanMeierResult(object):
-    def __init__(self, survival_function, confidence_interval, timeline):
-        self.survival_function = survival_function
-        self.confidence_interval = confidence_interval
-        self.timeline = timeline
-        self.confidence_interval = [[x, y[0], y[1]] for x, y in zip(self.timeline, self.confidence_interval)]
+    def __init__(self, survival_function_dict, confidence_interval_dict, timeline_dict):
+        self.survival_function_dict = survival_function_dict
+        self.timeline_dict = timeline_dict
+        self.confidence_interval_dict = {}
+        for key, ci in confidence_interval_dict.items():
+            self.confidence_interval_dict[key] = [
+                [x, y[0], y[1]] for x, y in zip(self.timeline_dict[key], ci)
+            ]
 
     # This method returns a json object with all the algorithm results
     def get_json_raw(self):
-        return make_json_raw(survival_function=list(zip(self.timeline, self.survival_function)),
-                             confidence_interval=list(self.confidence_interval))
+        return make_json_raw(
+            survival_functions=self.survival_function_dict,
+            confidence_intervals=self.confidence_interval_dict,
+            timelines=self.timeline_dict,
+        )
 
     def get_highchart(self):
         return {
-
-            'chart'      : {
-                'type'              : 'arearange',
-                'zoomType'          : 'x',
-                'scrollablePlotArea': {
-                    'minWidth'       : 600,
-                    'scrollPositionX': 1
-                }
+            "chart": {
+                "type": "arearange",
+                "zoomType": "x",
+                "scrollablePlotArea": {"minWidth": 600, "scrollPositionX": 1},
             },
-
-            'title'      : {
-                'text': 'Survival curve'
-            },
-
-            'xAxis'      : {
-                'title': {
-                    'text': 'Age'
-                }
-            },
-
-            'plotOptions': {
-                'arearange': {
-                    'step': 'left'
-                }
-            },
-
-            'yAxis'      : {
-                'title': {
-                    'text': 'Survival Probability'
-                }
-            },
-
-            'tooltip'    : {
-                'crosshairs': True,
-                'shared'    : True,
-            },
-
-            'legend'     : {
-                'enabled': False
-            },
-
-            'series'     : [{
-                'data': list(self.confidence_interval)
-
-            },
+            "title": {"text": "Survival curve"},
+            "xAxis": {"title": {"text": "Age"}},
+            "plotOptions": {"arearange": {"step": "left"}},
+            "yAxis": {"title": {"text": "Survival Probability"}},
+            "tooltip": {"crosshairs": True, "shared": True,},
+            "legend": {"enabled": False},
+            "series": [
+                {"data": list(self.confidence_interval_dict[key])}
+                for key in self.timeline_dict.keys()
+            ]
+            + [
                 {
-                    'type': "line",
-                    'step': True,
-                    'data': zip(self.timeline, self.survival_function.tolist()),
-                }]
-
+                    "type": "line",
+                    "step": True,
+                    "data": zip(
+                        self.timeline_dict[key], self.survival_function_dict[key]
+                    ),
+                }
+                for key in self.timeline_dict.keys()
+            ],
         }
 
     # This method packs everything in one json object, to be output in the frontend.
@@ -210,14 +240,11 @@ class KaplanMeierResult(object):
         result = {
             "result": [
                 # Raw results
-                {
-                    "type": "application/json",
-                    "data": self.get_json_raw()
-                },
+                {"type": "application/json", "data": self.get_json_raw()},
                 # Highchart Survival curve
                 {
                     "type": "application/vnd.highcharts+json",
-                    "data": self.get_highchart()
+                    "data": self.get_highchart(),
                 },
             ]
         }
@@ -226,21 +253,27 @@ class KaplanMeierResult(object):
 
 def build_timelines(df, time_axis, var):
     timelines = []
-    for g in df.groupby('subjectcode'):
-        timeline = (g[1][time_axis].tolist(), g[1][var].tolist())
+    for g in df.groupby("subjectcode"):
+        dates = [
+            datetime.strptime(s.replace(" 0:00", ""), "%Y-%m-%d")
+            for s in g[1][time_axis].tolist()
+        ]
+        deltas_in_days = [(d - min(dates)).days for d in dates]
+        timeline = (deltas_in_days, g[1][var].tolist())
         timelines.append(timeline)
+
     return timelines
 
 
 def main():
     class Args(object):
         def __init__(self):
-            self.input_local_DB = '/Users/zazon/madgik/exareme/Exareme-Docker/src/mip-algorithms/KAPLAN_MEIER/km_fake.sqlite'
-            self.y = 'alzheimerbroadcategory'
-            self.outcome_pos = 'AD'
-            self.outcome_neg = 'CN'
-            self.max_age = 100
-            self.db_query = 'select alzheimerbroadcategory from data;'
+            self.input_local_DB = "/Users/zazon/madgik/exareme/Exareme-Docker/src/mip-algorithms/KAPLAN_MEIER/km_fake.sqlite"
+            self.y = "alzheimerbroadcategory"
+            self.outcome_pos = "AD"
+            self.outcome_neg = "MCI"
+            self.max_age = 3 * 365
+            self.db_query = "select alzheimerbroadcategory from data;"
 
     args = Args()
     local_in = get_data(args)
@@ -249,5 +282,5 @@ def main():
     print(global_out)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
