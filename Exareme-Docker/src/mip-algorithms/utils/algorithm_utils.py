@@ -16,11 +16,11 @@ import numpy as np
 import pandas as pd
 from patsy import dmatrix, dmatrices
 
-env_type = os.environ["ENVIRONMENT_TYPE"]
-if env_type in {"DEV", "PROD"}:
-    PRIVACY_MAGIC_NUMBER = 10
-elif env_type == "TEST":
-    PRIVACY_MAGIC_NUMBER = 1
+# env_type = os.environ["ENVIRONMENT_TYPE"]
+# if env_type in {"DEV", "PROD"}:
+#     PRIVACY_MAGIC_NUMBER = 10
+# elif env_type == "TEST":
+#     PRIVACY_MAGIC_NUMBER = 1
 PRIVACY_MAGIC_NUMBER = 10
 
 P_VALUE_CUTOFF = 0.001

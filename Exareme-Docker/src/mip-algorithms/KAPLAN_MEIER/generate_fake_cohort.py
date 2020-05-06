@@ -11,11 +11,12 @@ import numpy as np
 import pandas as pd
 
 from faker import Faker
+from tqdm import tqdm
 
 PatientRecord = namedtuple(
     "PatientRecord",
     "subjectcode subjectage subjectvisitid subjectvisitdate "
-    "alzheimerbroadcategory apoe4",
+    "alzheimerbroadcategory apoe4 dataset",
 )
 
 
@@ -65,8 +66,8 @@ def patients():
     for i, visit in enumerate(visits):
         visit_id = fake.md5()
         age = get_age(birth_date, visit)
-        if can_get_sick and age >= 62 and alzheimerbroadcategory == "MCI":
-            prob = 2 ** ((age - 62) // 2) * 0.3
+        if can_get_sick and age > 64 and alzheimerbroadcategory == "MCI":
+            prob = 2 ** ((age - 6) // 2) * 0.3
             r = np.random.random()
             if r <= prob:
                 alzheimerbroadcategory = "AD"
@@ -78,15 +79,18 @@ def patients():
             visit.strftime("%Y-%m-%d") + " 0:00",
             alzheimerbroadcategory,
             apoe4,
+            "alzheimer_fake_cohort",
         )
-        if random.random() < 0.01:
-            break
+        # if random.random() < 0.01:
+        #     break
 
 
 def cohort(num_patients):
-    for _ in range(num_patients):
-        for visit in patients():
-            yield visit
+    with tqdm(total=num_patients, desc="Generating fake cohort") as pbar:
+        for _ in range(num_patients):
+            for visit in patients():
+                yield visit
+            pbar.update(1)
 
 
 def main():

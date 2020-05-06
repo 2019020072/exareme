@@ -6,11 +6,13 @@ import json
 import re
 import sqlite3
 from datetime import datetime
-import matplotlib.pyplot as plt
+
+# import matplotlib.pyplot as plt  XXX for local runs
 
 import numpy as np
 import pandas as pd
 from lifelines import KaplanMeierFitter
+from colour import Color
 
 from utils.algorithm_utils import (
     make_json_raw,
@@ -20,28 +22,26 @@ from utils.algorithm_utils import (
 )
 
 
-def read_csv(bin_var, outcome_pos, outcome_neg):
-    data = pd.read_csv("alzheimer_fake_cohort.csv")
-    data = data.dropna()
-    data = data[(data[bin_var] == outcome_pos) | (data[bin_var] == outcome_neg)]
-    levels = list(set(data["apoe4"]))
-    data_dict = {level: data[data["apoe4"] == level] for level in levels}
-    return data_dict
-
-
-def query_longitudinal(query, input_local_DB):
+def query_longitudinal(
+    query, input_local_DB, bin_var, outcome_pos, outcome_neg, control_variable
+):
     # fixme The following is a hack for querying longitudinal data,
     #  should be done by Exareme
     _, sel_head, sel_tail = re.split(r"(select )", query)
-    query = sel_head + "subjectcode, subjectvisitdate, subjectage, " + sel_tail
+    query = (
+        sel_head + "subjectcode, subjectvisitdate, subjectage, "
+        "subjectvisitid, dataset, " + sel_tail
+    )
     con = sqlite3.connect(input_local_DB)
     data = pd.read_sql(query, con=con)
     data.replace("", np.nan, inplace=True)  # fixme remove when no empty str in dbs
     data = data.dropna()
-    # Privacy check
+    data = data[(data[bin_var] == outcome_pos) | (data[bin_var] == outcome_neg)]
     if len(data) < PRIVACY_MAGIC_NUMBER:
         raise PrivacyError("Query results in illegal number of datapoints.")
-    return data
+    levels = list(set(data[control_variable]))
+    data_dict = {level: data[data[control_variable] == level] for level in levels}
+    return data_dict
 
 
 def get_data(args):
@@ -49,28 +49,36 @@ def get_data(args):
     bin_var = args.y.strip()
     outcome_pos = args.outcome_pos
     outcome_neg = args.outcome_neg
-    max_age = args.max_age
+    total_duration = args.total_duration
     db_query = args.db_query
+    control_variable = args.x
 
     # Get data and build timelines
-    # data = query_longitudinal(db_query, input_local_DB)  # todo uncomment for exareme
-    data_dict = read_csv(bin_var, outcome_pos, outcome_neg)
+    data_dict = query_longitudinal(
+        db_query, input_local_DB, bin_var, outcome_pos, outcome_neg, control_variable
+    )
+    # data_dict = read_csv(bin_var, outcome_pos, outcome_neg)  # XXX for local runs
     timelines_dict = {
         k: build_timelines(d, time_axis="subjectvisitdate", var=bin_var)
         for k, d in data_dict.items()
     }
 
+    # Remove patients who tested positive on first visit
+    for key, timelines in timelines_dict.items():
+        timelines = [tl for tl in timelines if tl[1][0] != outcome_pos]
+        timelines_dict[key] = timelines
+
     durations_dict = {}
     events_dict = {}
     for k, tl in timelines_dict.items():
         durations_dict[k], events_dict[k] = convert_timelines_to_events(
-            max_age, outcome_pos, tl
+            total_duration, outcome_pos, tl
         )
 
-    return events_dict, durations_dict, max_age
+    return events_dict, durations_dict, total_duration, control_variable
 
 
-def convert_timelines_to_events(max_age, outcome_pos, timelines):
+def convert_timelines_to_events(total_duration, outcome_pos, timelines):
     events = []
     durations = []
     for tl in timelines:
@@ -80,7 +88,7 @@ def convert_timelines_to_events(max_age, outcome_pos, timelines):
             duration = tl[0][event_idx]
         else:
             event = 0
-            duration = max_age
+            duration = total_duration
         events.append(event)
         durations.append(duration)
     events = np.array(events)
@@ -90,7 +98,7 @@ def convert_timelines_to_events(max_age, outcome_pos, timelines):
 
 def local_1(local_in):
     # Unpack data
-    events_dict, durations_dict, max_duration = local_in
+    events_dict, durations_dict, max_duration, control_variable = local_in
 
     grouped_durations_observed_dict = {}
     grouped_durations_non_observed_dict = {}
@@ -127,6 +135,7 @@ def local_1(local_in):
     local_out = TransferAndAggregateData(
         grouped_durations_observed=(grouped_durations_observed_dict, "concat"),
         grouped_durations_non_observed=(grouped_durations_non_observed_dict, "concat"),
+        control_variable=(control_variable, "do_nothing"),
     )
 
     return local_out
@@ -136,6 +145,7 @@ def global_1(global_in):
     data = global_in.get_data()
     grouped_durations_observed_dict = data["grouped_durations_observed"]
     grouped_durations_non_observed_dict = data["grouped_durations_non_observed"]
+    control_variable = data["control_variable"]
 
     survival_function_dict = {}
     confidence_interval_dict = {}
@@ -161,7 +171,7 @@ def global_1(global_in):
 
         # *****************************************
         # kmf.plot()
-        # plt.xlim(0, 3*365)  # TODO Remove these lines
+        # plt.xlim(0, 3*365)  # XXX for local runs
         # plt.show()
         # *****************************************
 
@@ -176,7 +186,10 @@ def global_1(global_in):
 
     # Pack results into corresponding object
     result = KaplanMeierResult(
-        survival_function_dict, confidence_interval_dict, timeline_dict
+        survival_function_dict,
+        confidence_interval_dict,
+        timeline_dict,
+        control_variable,
     )
     output = result.get_output()
 
@@ -189,7 +202,13 @@ def global_1(global_in):
 
 
 class KaplanMeierResult(object):
-    def __init__(self, survival_function_dict, confidence_interval_dict, timeline_dict):
+    def __init__(
+        self,
+        survival_function_dict,
+        confidence_interval_dict,
+        timeline_dict,
+        control_variable,
+    ):
         self.survival_function_dict = survival_function_dict
         self.timeline_dict = timeline_dict
         self.confidence_interval_dict = {}
@@ -197,6 +216,13 @@ class KaplanMeierResult(object):
             self.confidence_interval_dict[key] = [
                 [x, y[0], y[1]] for x, y in zip(self.timeline_dict[key], ci)
             ]
+        self.light_colors = {}
+        for i, key in enumerate(self.timeline_dict.keys()):
+            self.light_colors[key] = colors_light[i]
+        self.dark_colors = {}
+        for i, key in enumerate(self.timeline_dict.keys()):
+            self.dark_colors[key] = colors_dark[i]
+        self.control_variable = control_variable
 
     # This method returns a json object with all the algorithm results
     def get_json_raw(self):
@@ -214,22 +240,34 @@ class KaplanMeierResult(object):
                 "scrollablePlotArea": {"minWidth": 600, "scrollPositionX": 1},
             },
             "title": {"text": "Survival curve"},
-            "xAxis": {"title": {"text": "Age"}},
+            "xAxis": {"title": {"text": "Days since first visit"}},
             "plotOptions": {"arearange": {"step": "left"}},
             "yAxis": {"title": {"text": "Survival Probability"}},
             "tooltip": {"crosshairs": True, "shared": True,},
-            "legend": {"enabled": False},
+            "legend": {
+                "align": "left",
+                "verticalAlign": "middle",
+                "layout": "vertical",
+            },
             "series": [
-                {"data": list(self.confidence_interval_dict[key])}
+                {
+                    "data": list(self.confidence_interval_dict[key]),
+                    "color": self.light_colors[key],
+                    "marker": {"enabled": False},
+                    "showInLegend": False,
+                }
                 for key in self.timeline_dict.keys()
             ]
             + [
                 {
                     "type": "line",
+                    "name": self.control_variable + ": " + str(key),
                     "step": True,
                     "data": zip(
                         self.timeline_dict[key], self.survival_function_dict[key]
                     ),
+                    "color": self.dark_colors[key],
+                    "marker": {"enabled": False},
                 }
                 for key in self.timeline_dict.keys()
             ],
@@ -265,21 +303,51 @@ def build_timelines(df, time_axis, var):
     return timelines
 
 
+colors_dark = [
+    "#7cb5ec",
+    "#434348",
+    "#90ed7d",
+    "#f7a35c",
+    "#8085e9",
+    "#f15c80",
+    "#e4d354",
+    "#2b908f",
+    "#f45b5b",
+    "#91e8e1",
+]
+colors_light = [Color(c) for c in colors_dark]
+for c in colors_light:
+    c.luminance = (1 + c.luminance) / 2
+colors_light = [c.get_hex() for c in colors_light]
+
+
+# XXX Below this point: not needed for exareme, it's for running locally only
 def main():
     class Args(object):
         def __init__(self):
-            self.input_local_DB = "/Users/zazon/madgik/exareme/Exareme-Docker/src/mip-algorithms/KAPLAN_MEIER/km_fake.sqlite"
+            self.input_local_DB = ""
             self.y = "alzheimerbroadcategory"
             self.outcome_pos = "AD"
             self.outcome_neg = "MCI"
-            self.max_age = 3 * 365
+            self.total_duration = 1100
             self.db_query = "select alzheimerbroadcategory from data;"
+            self.x = "apoe4"
 
     args = Args()
     local_in = get_data(args)
     local_out = local_1(local_in=local_in)
     global_out = global_1(global_in=local_out)
     print(global_out)
+
+
+def read_csv(bin_var, outcome_pos, outcome_neg):
+    data = pd.read_csv("alzheimer_fake_cohort.csv")
+    data.replace("", np.nan, inplace=True)
+    data = data.dropna()
+    data = data[(data[bin_var] == outcome_pos) | (data[bin_var] == outcome_neg)]
+    levels = list(set(data["apoe4"]))
+    data_dict = {level: data[data["apoe4"] == level] for level in levels}
+    return data_dict
 
 
 if __name__ == "__main__":
