@@ -74,12 +74,11 @@ public class AdpDBArtJobMonitor implements Runnable {
                     log.debug("Update listeners ...");
                     synchronized (listeners) {
                         for (AdpDBQueryListener l : listeners) {
-                            log.debug(status.toString());
+                            log.debug(status.createSerializableStatus().toString());
                             l.statusChanged(queryID, status);
                         }
                     }
                 }
-
 
             }
             updateProgressStatistics();
@@ -128,6 +127,9 @@ public class AdpDBArtJobMonitor implements Runnable {
 
             if (statsOldOP != operatorsCompleted || statsOldER != errors
                     || statsOldDT != transferCompleted) {
+                log.debug("Updating Progress - Operators That Were Completed: " + statsOldOP + " - Operators Now Completed" + operatorsCompleted);
+                log.debug("Updating Progress - Transfer That Were Completed: " + statsOldDT + " - Transfers Now Completed" + transferCompleted);
+                log.debug("Updating Progress - Errors That Were Completed: " + statsOldER + " - Errors Now Completed" + errors);
                 statsOldDT = transferCompleted;
                 statsOldER = errors;
                 statsOldOP = operatorsCompleted;
