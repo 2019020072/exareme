@@ -124,6 +124,10 @@ public class AdpDBArtJobMonitor implements Runnable {
 
             int errors = stats.getErrors();
             adpStats.setErrors(errors);
+            
+            log.debug("Updating Progress - Operators That Were Completed: " + statsOldOP + " - Operators Now Completed" + operatorsCompleted);
+            log.debug("Updating Progress - Transfer That Were Completed: " + statsOldDT + " - Transfers Now Completed" + transferCompleted);
+            log.debug("Updating Progress - Errors That Were Completed: " + statsOldER + " - Errors Now Completed" + errors);
 
             if (statsOldOP != operatorsCompleted || statsOldER != errors
                     || statsOldDT != transferCompleted) {
