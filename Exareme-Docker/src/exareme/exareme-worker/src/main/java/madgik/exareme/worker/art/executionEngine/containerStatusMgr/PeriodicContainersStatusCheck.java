@@ -52,8 +52,8 @@ public class PeriodicContainersStatusCheck {
                         log.error("Container connection error: " + e);
                         faultyContainers.add(containerName);
                     }
-
                 }
+
                 if (!faultyContainers.isEmpty()) {
                     if (planEventScheduler != null) {
                         planEventScheduler.containersError(faultyContainers);
