@@ -97,7 +97,7 @@ public class OperatorGroupTerminatedEventHandler
                 state.eventScheduler.queueIndependentEvents(closeJobs);
 
 
-                log.debug("Triggered termination events! - " + termJobs.toString() + "  -  " + closeJobs.toString();
+                log.debug("Triggered termination events! - " + termJobs.toString() + "  -  " + closeJobs.toString());
             }
         }
 
