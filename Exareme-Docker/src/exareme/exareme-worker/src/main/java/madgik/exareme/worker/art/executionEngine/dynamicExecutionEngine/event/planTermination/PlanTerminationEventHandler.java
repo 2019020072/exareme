@@ -28,7 +28,7 @@ public class PlanTerminationEventHandler implements ExecEngineEventHandler<PlanT
     @Override
     public void preProcess(PlanTerminationEvent event, PlanEventSchedulerState state)
             throws RemoteException {
-        log.debug("Plan termination NOW");
+        log.debug("Plan termination NOW - " + state.getPlanSessionID());
         if (state.isTerminated() == false) {
             for (ContainerProxy proxy : state.getContainerProxies()) {
                 try {
