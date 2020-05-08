@@ -55,7 +55,9 @@ public class PlanTerminationEventHandler implements ExecEngineEventHandler<PlanT
             state.terminationListeners.clear();
             log.debug("Triggered " + listenerCount + " listeners!");
         }
+        log.debug("Terminated? " + state.isTerminated());
         if (state.isTerminated() == false) {
+            log.debug("Terminating...");
             state.setTerminated(true);
             state.getPlanSession().getPlanSessionStatus().setFinished(new Date());
         }

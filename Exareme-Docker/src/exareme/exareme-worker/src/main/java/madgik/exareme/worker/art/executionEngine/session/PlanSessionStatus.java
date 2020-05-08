@@ -46,7 +46,7 @@ public class PlanSessionStatus implements Serializable {
     }
 
     public boolean hasFinished() {
-        log.debug("Inside has Finished!!!!!");
+        log.debug("Inside has Finished!!!!!" + serialVersionUID);
         log.debug("hasFinished: " + hasFinished);
         log.debug("hasStarted: " + hasStarted);
         log.debug("hasException: " + hasException);
