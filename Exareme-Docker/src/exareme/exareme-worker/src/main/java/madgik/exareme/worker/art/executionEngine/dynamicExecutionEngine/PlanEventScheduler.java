@@ -320,6 +320,7 @@ public class PlanEventScheduler {
 
     public boolean continueExecutionEvent(PlanSessionID planSessionID) {
         lock.lock();
+        log.debug("continue Execution Event trigger !!!");
         try {
             IndependentEvents jobs = new IndependentEvents(state);
             OperatorTerminatedEvent event =
@@ -335,7 +336,7 @@ public class PlanEventScheduler {
 
     public void closeSession(IndependentEvents jobs) {
         lock.lock();
-        log.debug("Closing Session !!!");
+        log.debug("Trigger Closing Session !!!");
         try {
             PlanTerminationEvent event = new PlanTerminationEvent(state);
             jobs.addEvent(event, PlanTerminationEventHandler.instance,
@@ -347,7 +348,7 @@ public class PlanEventScheduler {
 
     public void planTerminated(IndependentEvents jobs) {
         lock.lock();
-        log.debug("Terminating PLAN !!! - " + jobs.toString());
+        log.debug("Trigger Terminating PLAN !!! - " + jobs.toString());
         try {
             PlanTerminationEvent event = new PlanTerminationEvent(state);
             jobs.addEvent(event, PlanTerminationEventHandler.instance,

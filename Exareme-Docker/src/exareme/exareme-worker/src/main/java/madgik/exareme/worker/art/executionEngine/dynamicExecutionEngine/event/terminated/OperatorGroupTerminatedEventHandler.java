@@ -45,7 +45,7 @@ public class OperatorGroupTerminatedEventHandler
     public void preProcess(OperatorTerminatedEvent event, PlanEventSchedulerState state)
             throws RemoteException {
 
-        log.debug("Preprocessing group operator termination event.");
+        log.debug("Preprocessing group operator termination event. - " + event.operatorID);
         // Set terminated
         if (event.operatorID != null) {
             log.trace("OperatorTerminated: " + event.operatorID.operatorName);
