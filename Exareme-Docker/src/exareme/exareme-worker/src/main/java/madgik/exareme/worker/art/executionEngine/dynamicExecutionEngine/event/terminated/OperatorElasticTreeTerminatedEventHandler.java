@@ -44,6 +44,7 @@ public class OperatorElasticTreeTerminatedEventHandler
     @Override
     public void preProcess(OperatorTerminatedEvent event, PlanEventSchedulerState state)
             throws RemoteException {
+        log.debug("Preprocessing elastic tree operator termination event.");
         //    log.info("PRE");
         if (event instanceof OperatorElasticTreeTerminatedEvent == false) {
             throw new RemoteException("Event not supported: " + event.getClass().getName());

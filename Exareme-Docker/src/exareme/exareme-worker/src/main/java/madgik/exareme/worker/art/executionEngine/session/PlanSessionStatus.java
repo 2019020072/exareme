@@ -3,6 +3,9 @@
  */
 package madgik.exareme.worker.art.executionEngine.session;
 
+import madgik.exareme.worker.art.executionEngine.dynamicExecutionEngine.DynamicStatusManager;
+import org.apache.log4j.Logger;
+
 import java.io.Serializable;
 import java.util.*;
 
@@ -28,6 +31,8 @@ public class PlanSessionStatus implements Serializable {
     private Map<String, ConcreteOperatorStatus> stateMap = null;
     private int finishedOperators = 0;
 
+    private static final Logger log = Logger.getLogger(PlanSessionStatus.class);
+
     public PlanSessionStatus() {
         this.exceptions = Collections.synchronizedList(new LinkedList<Exception>());
 
@@ -41,6 +46,17 @@ public class PlanSessionStatus implements Serializable {
     }
 
     public boolean hasFinished() {
+        log.debug("Inside has Finished!!!!!");
+        log.debug("hasFinished: " + hasFinished);
+        log.debug("hasStarted: " + hasStarted);
+        log.debug("hasException: " + hasException);
+        log.debug("startDate: " + startDate);
+        log.debug("finishDate: " + finishDate);
+        for(String s: stateMap.keySet()) {
+            log.debug("stateMap: " + stateMap.toString());
+        }
+        log.debug("finishedOperators: " + finishedOperators);
+
         return hasFinished;
     }
 

@@ -12,6 +12,7 @@ import madgik.exareme.worker.art.executionEngine.statusMgr.PlanSessionStatusMana
 import madgik.exareme.worker.art.executionEngine.statusMgr.PlanSessionStatusManagerInterface;
 import madgik.exareme.worker.art.executionEngine.statusMgr.PlanSessionStatusManagerProxy;
 import madgik.exareme.worker.art.remote.RmiRemoteObject;
+import org.apache.log4j.Logger;
 
 import java.rmi.RemoteException;
 import java.util.List;
@@ -25,6 +26,8 @@ import java.util.UUID;
  */
 public class RmiPlanSessionStatusManager extends RmiRemoteObject<PlanSessionStatusManagerProxy>
         implements PlanSessionStatusManager {
+
+    private static final Logger log = Logger.getLogger(RmiPlanSessionStatusManager.class);
 
     private PlanSessionStatusManagerInterface statusManagerInterface = null;
     private EntityName regEntityName = null;

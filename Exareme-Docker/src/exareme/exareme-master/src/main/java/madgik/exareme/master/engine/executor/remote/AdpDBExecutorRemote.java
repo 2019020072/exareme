@@ -136,9 +136,11 @@ public class AdpDBExecutorRemote implements AdpDBExecutor {
         ExecutionEngineSessionPlan sessionPlan = null;
 
         if (props.isTreeEnabled()) {
+            log.debug("Tree enabled");
             sessionPlan = session.startSessionElasticTree();
             sessionPlan.submitPlanElasticTree(plan, props.getSLA());
         } else {
+            log.debug("Tree NOT enabled");
             //TODO check if the following is needed
             sessionPlan = session.startSession();
             sessionPlan.submitPlan(plan);
