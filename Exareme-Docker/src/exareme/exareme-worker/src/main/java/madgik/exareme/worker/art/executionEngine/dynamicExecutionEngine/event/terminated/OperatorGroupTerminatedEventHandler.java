@@ -124,7 +124,7 @@ public class OperatorGroupTerminatedEventHandler
             HashMap<Long, OperatorGroup> groupMap =
                     state.groupDependencySolver().getActivatedGroups();
             if (groupMap == null && event.operatorID == null && !state.isTerminated()) {
-                log.trace("Not enough resources to start plan.");
+                log.debug("Not enough resources to start plan.");
                 state.getPlanSession().getPlanSessionStatus().planInstantiationException(
                         new NotEnoughResourcesException("Cannot execute query"), new Date());
                 state.eventScheduler.destroyPlanWithError(state.getPlanSessionID());
