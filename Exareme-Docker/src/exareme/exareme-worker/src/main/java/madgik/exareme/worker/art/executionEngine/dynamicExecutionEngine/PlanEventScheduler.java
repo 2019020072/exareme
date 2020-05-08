@@ -540,6 +540,7 @@ public class PlanEventScheduler {
     public void terminated(ConcreteOperatorID operatorID, int exidCode, Serializable exitMessage,
                            Date time, PlanSessionID sessionID, boolean terminateGroup) throws RemoteException {
         lock.lock();
+        log.debug("trigger Terminated 1");
         try {
             IndependentEvents jobs = new IndependentEvents(state);
             OperatorTerminatedEvent event =
@@ -559,6 +560,7 @@ public class PlanEventScheduler {
     public void terminated(ConcreteOperatorID operatorID, int exidCode, Serializable exitMessage,
                            Date time, boolean terminateGroup) throws RemoteException {
         lock.lock();
+        log.debug("trigger Terminated 2");
         try {
             IndependentEvents jobs = new IndependentEvents(state);
             OperatorTerminatedEvent event =
