@@ -335,6 +335,7 @@ public class PlanEventScheduler {
 
     public void closeSession(IndependentEvents jobs) {
         lock.lock();
+        log.debug("Closing Session !!!");
         try {
             PlanTerminationEvent event = new PlanTerminationEvent(state);
             jobs.addEvent(event, PlanTerminationEventHandler.instance,
@@ -346,6 +347,7 @@ public class PlanEventScheduler {
 
     public void planTerminated(IndependentEvents jobs) {
         lock.lock();
+        log.debug("Terminating PLAN !!! - " + jobs.toString());
         try {
             PlanTerminationEvent event = new PlanTerminationEvent(state);
             jobs.addEvent(event, PlanTerminationEventHandler.instance,

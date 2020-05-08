@@ -87,6 +87,7 @@ public class OperatorGroupTerminatedEventHandler
             if (state.getTerminatedOperatorCount() == state.getStatistics()
                     .totalProcessingOperators()) {
 
+
                 IndependentEvents termJobs = new IndependentEvents(state);
                 state.eventScheduler.planTerminated(termJobs);
                 state.eventScheduler.queueIndependentEvents(termJobs);
@@ -94,6 +95,9 @@ public class OperatorGroupTerminatedEventHandler
                 IndependentEvents closeJobs = new IndependentEvents(state);
                 state.eventScheduler.closeSession(closeJobs);
                 state.eventScheduler.queueIndependentEvents(closeJobs);
+
+
+                log.debug("Triggered termination events! - " + termJobs.toString() + "  -  " + closeJobs.toString();
             }
         }
 
