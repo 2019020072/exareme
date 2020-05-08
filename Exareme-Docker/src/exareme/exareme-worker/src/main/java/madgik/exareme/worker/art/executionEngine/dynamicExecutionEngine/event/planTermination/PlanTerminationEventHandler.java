@@ -42,25 +42,33 @@ public class PlanTerminationEventHandler implements ExecEngineEventHandler<PlanT
                 }
             }
             state.getStatistics().setEndTime(System.currentTimeMillis());
-        } else {
-            log.debug("Plan already terminated!");
-        }
-        synchronized (state.terminationListeners) {
-            log.debug("Trigger the termination listeners ... ");
-            int listenerCount = 0;
-            for (PlanTerminationListener listener : state.terminationListeners) {
-                listener.terminated(state.getPlanSessionID());
-                listenerCount++;
+            synchronized (state.terminationListeners) {
+                log.debug("Trigger the termination listeners ... ");
+                int listenerCount = 0;
+                for (PlanTerminationListener listener : state.terminationListeners) {
+                    listener.terminated(state.getPlanSessionID());
+                    listenerCount++;
+                }
+                state.terminationListeners.clear();
+                log.debug("Triggered " + listenerCount + " listeners!");
             }
-            state.terminationListeners.clear();
-            log.debug("Triggered " + listenerCount + " listeners!");
-        }
-        log.debug("Terminated? " + state.isTerminated());
-        if (state.isTerminated() == false) {
             log.debug("Terminating...");
             state.setTerminated(true);
             state.getPlanSession().getPlanSessionStatus().setFinished(new Date());
+        } else {
+            log.debug("Plan already terminated!");
+            synchronized (state.terminationListeners) {
+                log.debug("Trigger the termination listeners ... ");
+                int listenerCount = 0;
+                for (PlanTerminationListener listener : state.terminationListeners) {
+                    listener.terminated(state.getPlanSessionID());
+                    listenerCount++;
+                }
+                state.terminationListeners.clear();
+                log.debug("Triggered " + listenerCount + " listeners!");
+            }
         }
+
         /* Clean */
         for (OperatorEntity coe : state.groupDependencySolver().getOperatorsWithActiveResources()) {
             state.resourceManager.getAvailableResources(coe.container).releaseMemory(coe);
