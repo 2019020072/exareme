@@ -30,6 +30,7 @@ public class DynamicReportManager extends EventSchedulerManipulator
     public void planStart(Date time, ContainerID containerID, PlanSessionReportID sessionID)
             throws RemoteException {
         lock.lock();
+        log.debug("Operator Trigger, scheduling start!" + containerID.toString());
         try {
             log.trace("Plan Start:" + sessionID);
         } finally {
@@ -41,6 +42,7 @@ public class DynamicReportManager extends EventSchedulerManipulator
     public void planInstantiationException(RemoteException exception, Date time,
                                            ContainerID containerID, PlanSessionReportID sessionID) throws RemoteException {
         lock.lock();
+        log.debug("Operator Trigger, planInstantiationException!" + containerID.toString());
         try {
             PlanEventScheduler eventScheduler = getSchedulerWiReportId(sessionID);
             eventScheduler.destroyPlanWithError();
@@ -55,6 +57,7 @@ public class DynamicReportManager extends EventSchedulerManipulator
                                 Serializable exitMessage, Date time, ContainerID containerID, PlanSessionReportID sessionID,
                                 boolean terminateGroup) throws RemoteException {
         lock.lock();
+        log.debug("Operator Trigger, operatorSuccess!" + operatorID.operatorName);
         try {
             PlanEventScheduler eventScheduler = getSchedulerWiReportId(sessionID);
             eventScheduler.terminated(operatorID, exidCode, exitMessage, time, terminateGroup);
@@ -67,6 +70,7 @@ public class DynamicReportManager extends EventSchedulerManipulator
     public void operatorError(ConcreteOperatorID operatorID, RemoteException exception, Date time,
                               ContainerID containerID, PlanSessionReportID sessionID) throws RemoteException {
         lock.lock();
+        log.debug("Operator Trigger, operatorError!" + operatorID.operatorName);
         try {
             PlanEventScheduler eventScheduler = getSchedulerWiReportId(sessionID);
             eventScheduler.exception(operatorID, exception, time);
