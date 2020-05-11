@@ -24,23 +24,23 @@ public class EventHandlerRunnable implements Runnable {
     @Override
     public void run() {
         try {
-            logger.debug("Starting Processing... ");
+            logger.debug(event.getEvent().getClass().getName() + " Starting Processing... ");
             event.startProcessing();
 
-            logger.debug("Handling event... ");
+            logger.debug(event.getEvent().getClass().getName() + " Handling event... ");
             event.getHandler().handle(event.getEvent(), eventProcessor);
 
-            logger.debug("Handled event... ");
+            logger.debug(event.getEvent().getClass().getName() + " Handled event... ");
         } catch (RemoteException e) {
-            logger.debug("Caught Exception... ");
+            logger.debug(event.getEvent().getClass().getName() + " Caught Exception... ");
             event.setException(e);
         }
 
-        logger.debug("Processing listener... ");
+        logger.debug(event.getEvent().getClass().getName() + " Processing listener... ");
         event.getEventListener().processed(event.getEvent(), event.getException(), eventProcessor);
-        logger.debug("Finished processing listener... ");
+        logger.debug(event.getEvent().getClass().getName() + " Finished processing listener... ");
         event.endProcessing();
-        logger.debug("Event processed times: " +
+        logger.debug(event.getEvent().getClass().getName() + " Event processed times: " +
                 event.getWaitTime() + " / " + event.getProcessTime() +
                 " (" + event.getEvent().getClass().getName() + ")");
     }
