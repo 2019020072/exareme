@@ -86,6 +86,8 @@ public class OperatorExceptionEventHandler
             state.eventScheduler.queueIndependentEvents(close);
             // TODO(herald): check the retry policy
             group.timesFailed++;
+            log.debug("Times Failed: " + group.timesFailed);
+            log.debug("Retry? ... " + state.retryPolicy.retry(event.exception, group.timesFailed));
             if (state.retryPolicy.retry(event.exception, group.timesFailed)) {
                 // Re-schedule operator group
                 log.debug("Operator " + activeOperator.operatorEntity.operatorName

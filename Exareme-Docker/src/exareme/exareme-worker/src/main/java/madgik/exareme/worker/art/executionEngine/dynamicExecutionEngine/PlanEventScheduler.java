@@ -360,6 +360,7 @@ public class PlanEventScheduler {
 
     public void closeContainerSession(ContainerSessionID contSID, IndependentEvents jobs) {
         lock.lock();
+        log.debug("Closing Container Session");
         try {
             CloseContainerSessionEvent event = new CloseContainerSessionEvent(contSID, state);
             jobs.addEvent(event, CloseContainerSessionEventHandler.instance,
@@ -425,6 +426,7 @@ public class PlanEventScheduler {
 
     public void destroy(Destroy destroy, ContainerJobsEvent jobs) throws RemoteException {
         lock.lock();
+        log.debug("Trigger Destroy ...");
         try {
             DestroyEvent event = new DestroyEvent(destroy, state);
             jobs.destroys.add(event);
