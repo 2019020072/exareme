@@ -47,6 +47,8 @@ public class IndependentEventsHandler implements EventHandler<IndependentEvents>
 
                 log.debug("Events: " + e.getEvent());
                 ExecEngineEventHandler handler = (ExecEngineEventHandler) e.getHandler();
+                log.debug("Handler " + handler);
+                log.debug("Pre processing...");
                 handler.preProcess(e.getEvent(), event.state);
             }
             // Parallel-process

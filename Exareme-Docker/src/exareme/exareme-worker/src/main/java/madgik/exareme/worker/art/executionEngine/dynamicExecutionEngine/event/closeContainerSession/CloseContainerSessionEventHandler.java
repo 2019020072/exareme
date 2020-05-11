@@ -12,6 +12,7 @@ import madgik.exareme.worker.art.container.job.GetStatisticsJobResult;
 import madgik.exareme.worker.art.executionEngine.ExecEngineConstants;
 import madgik.exareme.worker.art.executionEngine.dynamicExecutionEngine.PlanEventSchedulerState;
 import madgik.exareme.worker.art.executionEngine.dynamicExecutionEngine.event.ExecEngineEventHandler;
+import madgik.exareme.worker.art.executionEngine.dynamicExecutionEngine.event.independent.IndependentEventsHandler;
 import org.apache.log4j.Logger;
 
 import java.rmi.RemoteException;
@@ -30,6 +31,7 @@ public class CloseContainerSessionEventHandler
     public static final CloseContainerSessionEventHandler instance =
             new CloseContainerSessionEventHandler();
     private static final long serialVersionUID = 1L;
+    private static final Logger log = Logger.getLogger(IndependentEventsHandler.class);
 
     public CloseContainerSessionEventHandler() {
     }
@@ -37,17 +39,22 @@ public class CloseContainerSessionEventHandler
     @Override
     public void preProcess(CloseContainerSessionEvent event, PlanEventSchedulerState state)
             throws RemoteException {
+        log.debug("preProcessing closing container session event ...");
         try {
             ExecutorService service =
                     Executors.newFixedThreadPool(ExecEngineConstants.THREADS_PER_INDEPENDENT_TASKS);
             ArrayList<GetStatsAndCloseSession> workers = new ArrayList<GetStatsAndCloseSession>();
             List<ContainerSession> sessions = state.getContSessions(event.containerSessionID);
+            log.debug("Sessions " + sessions.size());
             for (ContainerSession session : sessions) {
+                log.debug("Getting stats and closing sessions ...");
                 GetStatsAndCloseSession w = new GetStatsAndCloseSession(session);
                 workers.add(w);
                 service.submit(w);
             }
+            log.debug("Shut down sessions");
             service.shutdown();
+            log.debug("Awaiting termination");
             service.awaitTermination(1, TimeUnit.DAYS);
             for (GetStatsAndCloseSession w : workers) {
                 state.getStatistics().containerStats.add(w.stats.getStats());
@@ -56,6 +63,8 @@ public class CloseContainerSessionEventHandler
         } catch (InterruptedException e) {
             throw new RemoteException("Cannot handle close session event", e);
         }
+
+        log.debug("Finished preProcessing closing container session event ...");
     }
 
     @Override
@@ -85,12 +94,16 @@ class GetStatsAndCloseSession extends Thread {
     @Override
     public void run() {
         try {
-            log.trace("Closing session: " + session.getSessionID().getLongId());
+            log.debug("Closing session: " + session.getSessionID().getLongId());
             ContainerJobs jobs = new ContainerJobs();
             jobs.addJob(GetStatisticsJob.instance);
+            log.debug("Will execute jobs to close sessions");
             results = session.execJobs(jobs);
+            log.debug("will get statistics results");
             stats = (GetStatisticsJobResult) results.getJobResults().get(0);
+            log.debug("Closing session ... ");
             session.closeSession();
+            log.debug("Closed session");
         } catch (RemoteException e) {
             exception = e;
             log.error("Cannot close session", e);
