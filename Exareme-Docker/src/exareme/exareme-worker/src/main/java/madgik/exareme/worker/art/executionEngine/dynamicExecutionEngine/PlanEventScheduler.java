@@ -499,6 +499,8 @@ public class PlanEventScheduler {
             if (terminatedEvent) {
                 terminatedActiveEvents++;
             }
+
+            log.debug("Adding event to eventProcessor");
             state.eventProcessor.queue(event, independentEventsHandler, independentEventsListener);
         } finally {
             lock.unlock();
@@ -530,13 +532,19 @@ public class PlanEventScheduler {
         log.debug("Operator Exception 2 !!!");
         try {
             IndependentEvents jobs = new IndependentEvents(state);
+            log.debug("Created jobs!");
             OperatorExceptionEvent event =
                     new OperatorExceptionEvent(operatorID, exception, time, state);
+            log.debug("Created event!");
             jobs.addEvent(event, OperatorExceptionEventHandler.instance,
                     OperatorExceptionEventListener.instance);
+            log.debug("Added event to job.");
             queueIndependentEvents(jobs);
+            log.debug("Queued event.");
             terminatedActiveEvents = 0;
-        } finally {
+        } catch (Exception e) {
+            log.debug("EXCEPTION ON EXCEPTION!!! " + e.getMessage());
+        }finally{
             lock.unlock();
         }
     }

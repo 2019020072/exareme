@@ -17,7 +17,7 @@ import java.util.concurrent.Semaphore;
  */
 public class EventProcessor {
 
-    private static final Logger log = Logger.getLogger(EventProcessor.class);
+    private static final Logger logger = Logger.getLogger(EventProcessor.class);
     private int concurrentEvents = 0;
     private EventQueue eventQueue = null;
     private ExecutorService executor = null;
@@ -30,9 +30,10 @@ public class EventProcessor {
     }
 
     public EventFuture queue(Event event, EventHandler handler, EventListener listener) {
-        //	logger.info("Queued event: " + event.getClass().getName());
+        logger.debug("Queued event: " + event.getClass().getName());
         EventFuture future = new EventFuture(event);
         ActiveEvent activeEvent = new ActiveEvent(event, handler, listener, future);
+        logger.debug("Adding event to eventQueue");
         eventQueue.queue(activeEvent);
         return future;
     }
@@ -63,6 +64,6 @@ public class EventProcessor {
             processorThread.stop();
         }
         executor.shutdownNow();
-        log.info("Event Processor Stopped!");
+        logger.info("Event Processor Stopped!");
     }
 }
