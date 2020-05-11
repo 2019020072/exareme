@@ -45,6 +45,7 @@ public class DynamicReportManager extends EventSchedulerManipulator
         log.debug("Operator Trigger, planInstantiationException!" + containerID.toString());
         try {
             PlanEventScheduler eventScheduler = getSchedulerWiReportId(sessionID);
+            log.debug("Executing on eventScheduler with id: "+ sessionID);
             eventScheduler.destroyPlanWithError();
             log.error("Plan Instantiation:" + sessionID, exception);
         } finally {
@@ -60,6 +61,7 @@ public class DynamicReportManager extends EventSchedulerManipulator
         log.debug("Operator Trigger, operatorSuccess!" + operatorID.operatorName);
         try {
             PlanEventScheduler eventScheduler = getSchedulerWiReportId(sessionID);
+            log.debug("Executing on eventScheduler with id: "+ sessionID);
             eventScheduler.terminated(operatorID, exidCode, exitMessage, time, terminateGroup);
         } finally {
             lock.unlock();
@@ -73,6 +75,7 @@ public class DynamicReportManager extends EventSchedulerManipulator
         log.debug("Operator Trigger, operatorError!" + operatorID.operatorName);
         try {
             PlanEventScheduler eventScheduler = getSchedulerWiReportId(sessionID);
+            log.debug("Executing on eventScheduler with id: "+ sessionID);
             eventScheduler.exception(operatorID, exception, time);
             // log.error("Operator error: " + sessionID, exception);
         } finally {
