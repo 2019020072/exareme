@@ -48,7 +48,7 @@ public class OperatorGroupTerminatedEventHandler
         log.debug("Preprocessing group operator termination event. - " + event.operatorID);
         // Set terminated
         if (event.operatorID != null) {
-            log.trace("OperatorTerminated: " + event.operatorID.operatorName);
+            log.debug("OperatorTerminated: " + event.operatorID.operatorName);
             state.getStatistics().incrOperatorCompleted();
             ActiveOperator activeOperator = state.getActiveOperator(event.operatorID);
             if (event.terminateGroup
@@ -74,7 +74,7 @@ public class OperatorGroupTerminatedEventHandler
             activeOperator.exitDate = new Date();
             // Check if the group has terminated
             if ((activeGroup.hasError == false) && group.hasTerminated) {
-                log.trace("Operator Group Terminated: " + group.toString());
+                log.debug("Operator Group Terminated: " + group.toString());
                 state.groupDependencySolver().setTerminated(group);
                 // Close the container sessions
                 IndependentEvents jobs = new IndependentEvents(state);

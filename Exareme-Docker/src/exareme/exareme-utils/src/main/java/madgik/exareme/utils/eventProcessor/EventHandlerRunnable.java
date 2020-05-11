@@ -28,6 +28,7 @@ public class EventHandlerRunnable implements Runnable {
             event.startProcessing();
 
             logger.debug(event.getEvent() + " Handling event... ");
+            logger.debug(event.getEvent() + " Handler: " + event.getHandler());
             event.getHandler().handle(event.getEvent(), eventProcessor);
 
             logger.debug(event.getEvent() + " Handled event... ");

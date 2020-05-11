@@ -34,6 +34,7 @@ public class EventProcessorThread extends Thread {
                 logger.debug("Event Processor Thread, Executor: " + executor);
                 logger.debug("Event Processor Thread, Event: " + next);
                 logger.debug("Event Processor Thread, Event: " + next.getEvent());
+                logger.debug("Event Processor Thread, Event: " + next.getHandler());
                 executor.submit(job);
                 logger.debug("Event Processor Thread, Submitted job ");
             } catch (Exception e) {

@@ -3,6 +3,8 @@
  */
 package madgik.exareme.utils.eventProcessor;
 
+import org.apache.log4j.Logger;
+
 import java.rmi.RemoteException;
 
 /**
@@ -18,6 +20,7 @@ public class ActiveEvent {
     private long startProcessTime = 0;
     private long endProcessTime = 0;
 
+    private static Logger logger = Logger.getLogger(ActiveEvent.class);
     public ActiveEvent(Event event, EventHandler handler, EventListener eventListener,
                        EventFuture future) {
         this.event = event;
@@ -60,6 +63,7 @@ public class ActiveEvent {
     }
 
     public EventHandler getHandler() {
+        logger.debug("Getting Handler: " + handler);
         return handler;
     }
 
