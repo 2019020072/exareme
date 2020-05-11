@@ -12,7 +12,7 @@ import java.rmi.RemoteException;
  */
 public class EventHandlerRunnable implements Runnable {
 
-    private static Logger log = Logger.getLogger(EventHandlerRunnable.class);
+    private static Logger logger = Logger.getLogger(EventHandlerRunnable.class);
     private ActiveEvent event = null;
     private EventProcessor eventProcessor = null;
 
@@ -24,14 +24,23 @@ public class EventHandlerRunnable implements Runnable {
     @Override
     public void run() {
         try {
+            logger.debug("Starting Processing... ");
             event.startProcessing();
+
+            logger.debug("Handling event... ");
             event.getHandler().handle(event.getEvent(), eventProcessor);
+
+            logger.debug("Handled event... ");
         } catch (RemoteException e) {
+            logger.debug("Caught Exception... ");
             event.setException(e);
         }
+
+        logger.debug("Processing listener... ");
         event.getEventListener().processed(event.getEvent(), event.getException(), eventProcessor);
+        logger.debug("Finished processing listener... ");
         event.endProcessing();
-        log.debug("Event processed times: " +
+        logger.debug("Event processed times: " +
                 event.getWaitTime() + " / " + event.getProcessTime() +
                 " (" + event.getEvent().getClass().getName() + ")");
     }

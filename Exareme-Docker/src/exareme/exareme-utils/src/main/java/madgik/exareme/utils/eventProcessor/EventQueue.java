@@ -25,13 +25,13 @@ public class EventQueue {
 
     public void queue(ActiveEvent event) {
         queue.add(event);
-        logger.debug("Event queue, count = " + count.getQueueLength());
+        logger.debug("queue, count = " + count.getQueueLength());
         count.release();
     }
 
     public ActiveEvent getNext() throws InterruptedException {
 
-        logger.debug("Event queue, count = " + count.getQueueLength());
+        logger.debug("getNext, count = " + count.getQueueLength());
         count.acquire();
         logger.debug("Event queue, acquired lock ");
         return queue.remove(0);

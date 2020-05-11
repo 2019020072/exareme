@@ -500,8 +500,10 @@ public class PlanEventScheduler {
                 terminatedActiveEvents++;
             }
 
-            log.debug("Adding event to eventProcessor");
+            log.debug("Adding event to eventProcessor.");
             state.eventProcessor.queue(event, independentEventsHandler, independentEventsListener);
+
+            log.debug("Finished adding event to eventProcessor.");
         } finally {
             lock.unlock();
         }

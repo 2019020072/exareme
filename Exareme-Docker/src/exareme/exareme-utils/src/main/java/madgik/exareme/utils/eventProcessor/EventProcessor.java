@@ -33,8 +33,9 @@ public class EventProcessor {
         logger.debug("Queued event: " + event.getClass().getName());
         EventFuture future = new EventFuture(event);
         ActiveEvent activeEvent = new ActiveEvent(event, handler, listener, future);
-        logger.debug("Adding event to eventQueue");
+        logger.debug("Adding event to eventQueue.");
         eventQueue.queue(activeEvent);
+        logger.debug("Finished adding event to eventQueue.");
         return future;
     }
 

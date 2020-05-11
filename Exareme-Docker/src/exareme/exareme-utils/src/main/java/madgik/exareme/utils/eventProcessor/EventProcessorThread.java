@@ -26,6 +26,7 @@ public class EventProcessorThread extends Thread {
         while (true) {
             logger.debug("Event Processor Thread running...");
             try {
+                logger.debug("Event Processor Thread, getting next ....");
                 ActiveEvent next = eventQueue.getNext();
                 logger.debug("Event Processor Thread, got next");
 
