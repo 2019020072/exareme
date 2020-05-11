@@ -40,6 +40,9 @@ public class OperatorExceptionEventHandler
     @Override
     public void preProcess(OperatorExceptionEvent event, PlanEventSchedulerState state)
             throws RemoteException {
+
+        log.debug("OperatorExceptionEventHandler running ... ");
+
         ActiveOperator activeOperator = state.getActiveOperator(event.operatorID);
         if (activeOperator.operatorEntity.type == OperatorType.processing) {
             String opName = activeOperator.operatorEntity.operatorName.split("\\.")[0];
@@ -52,10 +55,14 @@ public class OperatorExceptionEventHandler
         // If is the first error - stop execution of the group
         HashMap<String, ContainerJobsEvent> jobsMap = new HashMap<String, ContainerJobsEvent>();
         IndependentEvents events = new IndependentEvents(state);
+
+        log.debug("Error Count  == " + errorCnt);
+
         if (errorCnt == 1) {
             // Stop & destroy the operators
             ActiveOperatorGroup activeGroup =
                     group.opNameActiveGroupMap.get(activeOperator.objectName);
+            log.debug("Destroying the operators ... Number: " + activeGroup.planSession.getExecutionPlan().getOperatorCount());
             for (OperatorEntity entity : activeGroup.planSession.getExecutionPlan()
                     .iterateOperators()) {
                 ContainerJobsEvent e = ContainerJobsEventHandler
@@ -118,6 +125,9 @@ public class OperatorExceptionEventHandler
                 state.eventScheduler.destroyPlanWithError();
             }
         }
+
+        log.debug("Increasing operators Error");
+
         state.getStatistics().incrOperatorsError();
     }
 

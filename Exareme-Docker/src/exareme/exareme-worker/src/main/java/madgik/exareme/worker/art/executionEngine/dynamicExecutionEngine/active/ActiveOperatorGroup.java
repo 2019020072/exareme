@@ -197,11 +197,17 @@ public class ActiveOperatorGroup {
     }
 
     public int setError(OperatorEntity entity, Exception e) {
+        log.debug("setError running ...");
+
+        log.debug("hasTerminated = " + hasTerminated);
+
         hasError = true;
         runningOperators.remove(entity.operatorName);
         errorOperators.put(entity.operatorName, entity);
         LinkedList<Exception> exceptions = exceptionMap.get(entity.operatorName);
+
         if (exceptions == null) {
+            log.debug("Exceptions: " + exceptions);
             exceptions = new LinkedList<>();
             exceptionMap.put(entity.operatorName, exceptions);
         }
@@ -209,6 +215,11 @@ public class ActiveOperatorGroup {
         if (runningOperators.isEmpty()) {
             hasTerminated = true;
         }
+
+        log.debug("Exception Map size = " + exceptionMap.size());
+        log.debug("runningOperators.isEmpty() = " + runningOperators.isEmpty());
+        log.debug("hasTerminated = " + hasTerminated);
+
         return exceptionMap.size();
     }
 }

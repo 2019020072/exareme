@@ -507,6 +507,7 @@ public class PlanEventScheduler {
     public void exception(ConcreteOperatorID operatorID, RemoteException exception, Date time,
                           PlanSessionID sessionID) throws RemoteException {
         lock.lock();
+        log.debug("Operator Exception 1 !!!");
         try {
             IndependentEvents jobs = new IndependentEvents(state);
             OperatorExceptionEvent event =
@@ -524,6 +525,7 @@ public class PlanEventScheduler {
     public void exception(ConcreteOperatorID operatorID, RemoteException exception, Date time)
             throws RemoteException {
         lock.lock();
+        log.debug("Operator Exception 2 !!!");
         try {
             IndependentEvents jobs = new IndependentEvents(state);
             OperatorExceptionEvent event =
@@ -540,7 +542,7 @@ public class PlanEventScheduler {
     public void terminated(ConcreteOperatorID operatorID, int exidCode, Serializable exitMessage,
                            Date time, PlanSessionID sessionID, boolean terminateGroup) throws RemoteException {
         lock.lock();
-        log.debug("trigger Terminated 1");
+        log.debug("Operator Terminated 1");
         try {
             IndependentEvents jobs = new IndependentEvents(state);
             OperatorTerminatedEvent event =
@@ -560,7 +562,7 @@ public class PlanEventScheduler {
     public void terminated(ConcreteOperatorID operatorID, int exidCode, Serializable exitMessage,
                            Date time, boolean terminateGroup) throws RemoteException {
         lock.lock();
-        log.debug("trigger Terminated 2");
+        log.debug("Operator Terminated 2");
         try {
             IndependentEvents jobs = new IndependentEvents(state);
             OperatorTerminatedEvent event =
