@@ -9,7 +9,7 @@ import java.util.concurrent.ExecutorService;
 
 public class EventProcessorThread extends Thread {
 
-    private static Logger log = Logger.getLogger(EventProcessorThread.class);
+    private static Logger logger = Logger.getLogger(EventProcessorThread.class);
     private EventQueue eventQueue = null;
     private ExecutorService executor = null;
     private EventProcessor processor = null;
@@ -24,12 +24,16 @@ public class EventProcessorThread extends Thread {
     @Override
     public void run() {
         while (true) {
+            logger.debug("Event Processor Thread running...");
             try {
                 ActiveEvent next = eventQueue.getNext();
+                logger.debug("Event Processor Thread, got next");
+
                 EventHandlerRunnable job = new EventHandlerRunnable(next, processor);
                 executor.submit(job);
+                logger.debug("Event Processor Thread, Submitted job ");
             } catch (Exception e) {
-                log.error("Cannot run event", e);
+                logger.error("Cannot run event", e);
             }
         }
     }
