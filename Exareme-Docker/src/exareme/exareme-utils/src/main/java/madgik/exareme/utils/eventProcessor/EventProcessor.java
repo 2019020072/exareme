@@ -40,8 +40,12 @@ public class EventProcessor {
     }
 
     public void start() {
+
+        logger.debug("Event Processor starting...");
         processorThread = new EventProcessorThread(eventQueue, executor, this);
         processorThread.start();
+
+        logger.debug("Event Processor started.");
     }
 
     public void stop() {
@@ -49,17 +53,26 @@ public class EventProcessor {
     }
 
     public void stop(boolean now) {
+
+        logger.debug("Event Processor stopping ...");
         if (now) {
+
+            logger.debug("Now?");
             // TODO(herald): Take buckup!
             processorThread.stop();
         } else {
+            logger.debug("Not now...");
             Semaphore semaphore = new Semaphore(0);
             StopEventHandler eventHandler = new StopEventHandler(semaphore);
             StopEventListener eventListener = new StopEventListener();
+            logger.debug("Queueing stop event.");
             queue(new StopEvent(), eventHandler, eventListener);
+            logger.debug("Queued stop event.");
             /* Wait for termination */
             try {
+                logger.debug("Acquiring semaphore");
                 semaphore.acquire();
+                logger.debug("Acquired semaphore");
             } catch (Exception e) {
             }
             processorThread.stop();
