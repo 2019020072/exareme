@@ -330,7 +330,7 @@ public class RmiContainer extends RmiRemoteObject<ContainerProxy> implements Con
                 break;
             }
         }
-        log.debug("Returning results: " + results.getJobResults().get(0));
+        log.debug("Returning results: " + results.getJobResults().size());
         byte[] data = SerializationUtils.serialize(results);
         log.debug("data: " + data.length);
         return results;
