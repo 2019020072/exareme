@@ -61,14 +61,17 @@ public class Executor extends Thread {
     @Override
     public void run() {
         ArrayList<AbstractContainerJob> jobs = null;
+        log.debug("Running job ... ") ;
         while (!stop) {
             try {
                 sem.acquire();
+                log.debug("Acquired queue ... ") ;
             } catch (InterruptedException ex) {
                 java.util.logging.Logger.getLogger(Executor.class.getName()).
                         log(Level.SEVERE, null, ex);
             }
             jobs = jobQueue.getNextJob(resources);
+            log.debug("Got next job: " + jobs.size()) ;
             if (jobs != null) {
                 for (AbstractContainerJob job : jobs) {
                     log.debug("Starting Job " + job + " " + job.getJob());

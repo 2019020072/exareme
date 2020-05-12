@@ -110,7 +110,7 @@ public class JobQueue implements JobQueueInterface {
     @Override
     public ArrayList<AbstractContainerJob> getNextJob(ContainerResources availableResources) {
         ArrayList<AbstractContainerJob> ret = new ArrayList<>();
-
+        log.debug("Getting next job");
         synchronized (jobMap) {
             Entry<Resources, Queue<AbstractContainerJob>> entry;
 
@@ -129,6 +129,7 @@ public class JobQueue implements JobQueueInterface {
             }
 
         }
+        log.debug("Got next job");
         return ret;
     }
 
@@ -137,6 +138,7 @@ public class JobQueue implements JobQueueInterface {
                                      ContainerSessionID contSessionID, PlanSessionID sessionID) throws RemoteException {
         AbstractContainerJob abstactContainerJob = null;
         double mem = 0.0;
+        log.debug("Added container job! Job type: " + job.getType());
         switch (job.getType()) {
             case dataTransferRegister: {
                 abstactContainerJob =
@@ -158,6 +160,7 @@ public class JobQueue implements JobQueueInterface {
             case destroyBuffer:
             case createReadAdaptor:
             case createWriteAdaptor: {
+                log.debug("Creating container job!");
                 abstactContainerJob =
                         new AbstractContainerJob(job, new ContainerJobResources(mem), contSessionID,
                                 sessionID);
@@ -170,8 +173,16 @@ public class JobQueue implements JobQueueInterface {
                 break;
             }
         }
+
+
+        log.debug("Preparing job ");
+
         ContainerJobResult result = prepareJob(job, contSessionID, sessionID);
+
+        log.debug("Prepared job, hasExec: " + hasExec(job));
+
         if (hasExec(job)) {
+
             synchronized (jobMap) {
                 if (jobMap.containsKey(abstactContainerJob.getResources())) {
                     jobMap.get(abstactContainerJob.getResources()).
@@ -183,7 +194,11 @@ public class JobQueue implements JobQueueInterface {
                 }
             }
         }
+
+
+        log.debug("Adding job!");
         executor.JobAdded();
+        log.debug("Added job!");
         return result;
     }
 

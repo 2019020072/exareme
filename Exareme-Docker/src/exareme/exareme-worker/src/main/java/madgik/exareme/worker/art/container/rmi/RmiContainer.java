@@ -317,6 +317,7 @@ public class RmiContainer extends RmiRemoteObject<ContainerProxy> implements Con
             } else {
                 log.debug("Other type of job!");
                 result = jobQueueInterface.addJob(job, jobs.contSessionID, jobs.sessionID);
+                log.debug("Got job result, adding it to results.");
                 results.addJobResult(result);
             }
 
@@ -325,6 +326,7 @@ public class RmiContainer extends RmiRemoteObject<ContainerProxy> implements Con
                 break;
             }
         }
+        log.debug("Returning results!");
         return results;
     }
 

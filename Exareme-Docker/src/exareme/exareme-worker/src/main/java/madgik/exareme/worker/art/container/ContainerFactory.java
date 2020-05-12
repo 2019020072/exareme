@@ -54,7 +54,7 @@ public class ContainerFactory {
 
         JobQueueInterface jobQueueInterface = new JobQueue();
         ContainerResources resources =
-                new ContainerResources(100);//TODO(DSQ) resources of container
+                new ContainerResources(300);    //TODO(DSQ) resources of container
         Executor executor = new Executor(resources);
         jobQueueInterface.setExecutor(executor);
         executor.setJobQueue(jobQueueInterface);
