@@ -173,6 +173,7 @@ public class RmiContainer extends RmiRemoteObject<ContainerProxy> implements Con
             log.debug("Executing Job: " + job.getType().name() + " " + job.toString());
             if (job.getType()
                     == ContainerJobType.createOperator) { // create buffer and link//////////////////create OP
+                log.debug("Job type = createOperator");
                 if (((CreateOperatorJob) job).type
                         == OperatorType.dataTransfer) {//////////////////////////////////////////DataTransfer
                     log.debug("Data transfer op: " + ((CreateOperatorJob) job).operatorName);
@@ -274,11 +275,13 @@ public class RmiContainer extends RmiRemoteObject<ContainerProxy> implements Con
 
 
             } else if (job.getType() == ContainerJobType.distributedJobCreateDataflow) {
+                log.debug("Job type = distributedJobCreateDataflow");
+
                 result = new CreateDataflowJobResult();
                 results.addJobResult(result);
 
             } else if (job.getType() == ContainerJobType.createOperatorLink) {
-                log.trace("Creating operator link...");
+                log.debug("Creating operator link...");
                 CreateOperatorLinkJob createLinkJob = (CreateOperatorLinkJob) job;
                 if (!dataMatOps.contains(createLinkJob.fromConcreteOperatorID.operatorName)) {
                     //From Operator is not dataMaterialization
@@ -312,11 +315,13 @@ public class RmiContainer extends RmiRemoteObject<ContainerProxy> implements Con
                 }
 
             } else {
+                log.debug("Other type of job!");
                 result = jobQueueInterface.addJob(job, jobs.contSessionID, jobs.sessionID);
                 results.addJobResult(result);
             }
 
             if (result.hasException()) {
+                log.debug("Result Has Exception!");
                 break;
             }
         }

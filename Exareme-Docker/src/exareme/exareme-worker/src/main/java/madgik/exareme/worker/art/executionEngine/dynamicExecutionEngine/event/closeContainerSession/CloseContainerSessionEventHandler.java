@@ -4,6 +4,7 @@
 package madgik.exareme.worker.art.executionEngine.dynamicExecutionEngine.event.closeContainerSession;
 
 import madgik.exareme.utils.eventProcessor.EventProcessor;
+import madgik.exareme.worker.art.container.ContainerJob;
 import madgik.exareme.worker.art.container.ContainerJobResults;
 import madgik.exareme.worker.art.container.ContainerJobs;
 import madgik.exareme.worker.art.container.ContainerSession;
@@ -31,7 +32,7 @@ public class CloseContainerSessionEventHandler
     public static final CloseContainerSessionEventHandler instance =
             new CloseContainerSessionEventHandler();
     private static final long serialVersionUID = 1L;
-    private static final Logger log = Logger.getLogger(IndependentEventsHandler.class);
+    private static final Logger log = Logger.getLogger(CloseContainerSessionEventHandler.class);
 
     public CloseContainerSessionEventHandler() {
     }
@@ -98,6 +99,10 @@ class GetStatsAndCloseSession extends Thread {
             ContainerJobs jobs = new ContainerJobs();
             jobs.addJob(GetStatisticsJob.instance);
             log.debug("Will execute jobs to close sessions");
+            log.debug("jobs: " + jobs.getJobs().size());
+            for(ContainerJob job: jobs.getJobs()){
+                log.debug("job: " + job.getType());
+            }
             results = session.execJobs(jobs);
             log.debug("will get statistics results");
             stats = (GetStatisticsJobResult) results.getJobResults().get(0);
