@@ -49,13 +49,13 @@ public class ContainerSession implements Serializable {
         jobs.setSession(containerSessionID, sessionID);
         logger.debug("Remote Object: " + containerProxy.getRemoteObject());
         logger.debug("Running job: " + jobs.getJobs().get(0) + " - and returning");
-        try {
-            ContainerJobResults result = containerProxy.getRemoteObject().execJobs(jobs);
-            logger.debug("Result: " + result);
-            return result;
-        }catch(Exception e){
-            logger.debug("Exception ... " + e.getMessage());
-        }
+//        try {
+//            ContainerJobResults result = containerProxy.getRemoteObject().execJobs(jobs);
+//            logger.debug("Result: " + result);
+//            return result;
+//        }catch(Exception e){
+//            logger.debug("Exception ... " + e.getMessage());
+//        }
         return null;
     }
 
