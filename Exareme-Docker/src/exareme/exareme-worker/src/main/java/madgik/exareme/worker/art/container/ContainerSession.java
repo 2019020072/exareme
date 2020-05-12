@@ -46,6 +46,8 @@ public class ContainerSession implements Serializable {
     public ContainerJobResults execJobs(ContainerJobs jobs) throws RemoteException {
         logger.debug("Setting session.");
         jobs.setSession(containerSessionID, sessionID);
+        logger.debug("Remote Object: " + containerProxy.getRemoteObject());
+        logger.debug("Remote Object status: " + containerProxy.getRemoteObject().getStatus());
         logger.debug("Running job: " + jobs.getJobs().get(0) + " - and returning");
         return containerProxy.getRemoteObject().execJobs(jobs);
     }
