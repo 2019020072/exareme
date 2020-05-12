@@ -6,6 +6,7 @@ package madgik.exareme.worker.art.container;
 import madgik.exareme.common.art.ContainerSessionID;
 import madgik.exareme.common.art.PlanSessionID;
 import madgik.exareme.worker.art.executionEngine.dynamicExecutionEngine.event.closeContainerSession.CloseContainerSessionEventHandler;
+import org.apache.commons.lang.ObjectUtils;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
@@ -49,9 +50,14 @@ public class ContainerSession implements Serializable {
         logger.debug("Remote Object: " + containerProxy.getRemoteObject());
         logger.debug("Remote Object status: " + containerProxy.getRemoteObject().getStatus());
         logger.debug("Running job: " + jobs.getJobs().get(0) + " - and returning");
-        ContainerJobResults result = containerProxy.getRemoteObject().execJobs(jobs);
-        logger.debug("Result: " + result);
-        return result;
+        try {
+            ContainerJobResults result = containerProxy.getRemoteObject().execJobs(jobs);
+            logger.debug("Result: " + result);
+            return result;
+        }catch(Exception e){
+            logger.debug("Exception ... " + e.getMessage());
+        }
+        return null;
     }
 
     public void closeSession() throws RemoteException {
