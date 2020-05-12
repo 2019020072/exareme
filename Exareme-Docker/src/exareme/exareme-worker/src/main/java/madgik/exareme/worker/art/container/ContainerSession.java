@@ -5,6 +5,8 @@ package madgik.exareme.worker.art.container;
 
 import madgik.exareme.common.art.ContainerSessionID;
 import madgik.exareme.common.art.PlanSessionID;
+import madgik.exareme.worker.art.executionEngine.dynamicExecutionEngine.event.closeContainerSession.CloseContainerSessionEventHandler;
+import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
@@ -19,6 +21,7 @@ import java.rmi.RemoteException;
  * @since 1.0
  */
 public class ContainerSession implements Serializable {
+    private static final Logger logger = Logger.getLogger(ContainerSession.class);
 
     private static final long serialVersionUID = 1L;
     private ContainerSessionID containerSessionID = null;
@@ -41,7 +44,9 @@ public class ContainerSession implements Serializable {
     }
 
     public ContainerJobResults execJobs(ContainerJobs jobs) throws RemoteException {
+        logger.debug("Setting session.");
         jobs.setSession(containerSessionID, sessionID);
+        logger.debug("Running job: " + jobs.getJobs().get(0) + " - and returning");
         return containerProxy.getRemoteObject().execJobs(jobs);
     }
 

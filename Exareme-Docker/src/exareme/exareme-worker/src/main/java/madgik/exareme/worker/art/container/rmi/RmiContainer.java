@@ -326,7 +326,7 @@ public class RmiContainer extends RmiRemoteObject<ContainerProxy> implements Con
                 break;
             }
         }
-        log.debug("Returning results!");
+        log.debug("Returning results: " + results.getJobResults().get(0));
         return results;
     }
 

@@ -57,6 +57,7 @@ public class CloseContainerSessionEventHandler
             service.shutdown();
             log.debug("Awaiting termination");
             service.awaitTermination(1, TimeUnit.DAYS);
+            log.debug("Continuing...");
             for (GetStatsAndCloseSession w : workers) {
                 state.getStatistics().containerStats.add(w.stats.getStats());
             }
