@@ -59,7 +59,8 @@ public class CloseContainerSessionEventHandler
             service.awaitTermination(1, TimeUnit.DAYS);
             log.debug("Continuing...");
             for (GetStatsAndCloseSession w : workers) {
-                state.getStatistics().containerStats.add(w.stats.getStats());
+                if(w.stats != null)
+                    state.getStatistics().containerStats.add(w.stats.getStats());
             }
             event.messageCount += workers.size();
         } catch (InterruptedException e) {
@@ -107,6 +108,7 @@ class GetStatsAndCloseSession extends Thread {
             results = session.execJobs(jobs);
             log.debug("will get statistics results");
             stats = (GetStatisticsJobResult) results.getJobResults().get(0);
+            //stats = null;
             log.debug("Closing session ... ");
             session.closeSession();
             log.debug("Closed session");
