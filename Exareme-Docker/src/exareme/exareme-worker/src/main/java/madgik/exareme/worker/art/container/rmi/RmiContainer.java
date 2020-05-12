@@ -331,8 +331,8 @@ public class RmiContainer extends RmiRemoteObject<ContainerProxy> implements Con
             }
         }
         log.debug("Returning results: " + results.getJobResults().size());
-        //byte[] data = SerializationUtils.serialize(results);
-        //log.debug("data: " + data.length);
+        byte[] data = SerializationUtils.serialize(results);
+        log.debug("data: " + data.length);
         return results;
     }
 
