@@ -11,6 +11,8 @@ import madgik.exareme.common.optimizer.OperatorType;
 import madgik.exareme.utils.association.Pair;
 import madgik.exareme.utils.net.NetUtil;
 import madgik.exareme.utils.properties.AdpProperties;
+import madgik.exareme.utils.serialization.SerializationUtil;
+import madgik.exareme.utils.serialization.SerializedObject;
 import madgik.exareme.worker.art.concreteOperator.ConcreteOperatorID;
 import madgik.exareme.worker.art.container.*;
 import madgik.exareme.worker.art.container.adaptorMgr.AdaptorManager;
@@ -42,8 +44,10 @@ import madgik.exareme.worker.art.quantumClock.ContainerQuantumClock;
 import madgik.exareme.worker.art.registry.updateDeamon.RegistryUpdateDeamon;
 import madgik.exareme.worker.art.registry.updateDeamon.RegistryUpdateDeamonFactory;
 import madgik.exareme.worker.art.remote.RmiRemoteObject;
+import org.apache.commons.lang.SerializationUtils;
 import org.apache.log4j.Logger;
 
+import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.rmi.ServerException;
 import java.util.HashMap;
@@ -327,6 +331,8 @@ public class RmiContainer extends RmiRemoteObject<ContainerProxy> implements Con
             }
         }
         log.debug("Returning results: " + results.getJobResults().get(0));
+        byte[] data = SerializationUtils.serialize(results);
+        log.debug("data: " + data.length);
         return results;
     }
 
