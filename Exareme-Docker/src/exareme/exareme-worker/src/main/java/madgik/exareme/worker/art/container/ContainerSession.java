@@ -52,7 +52,7 @@ public class ContainerSession implements Serializable {
         try {
             ContainerJobResults result = containerProxy.getRemoteObject().execJobs(jobs);
             logger.debug("Result: " + result);
-            return null;
+            return result;
         }catch(Exception e){
             logger.debug("Exception ... " + e.getMessage());
         }
