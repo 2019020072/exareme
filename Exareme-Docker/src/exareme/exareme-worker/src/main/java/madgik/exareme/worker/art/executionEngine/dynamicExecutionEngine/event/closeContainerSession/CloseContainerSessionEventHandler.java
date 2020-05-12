@@ -59,9 +59,9 @@ public class CloseContainerSessionEventHandler
             service.awaitTermination(1, TimeUnit.DAYS);
             log.debug("Continuing...");
             for (GetStatsAndCloseSession w : workers) {
-                //state.getStatistics().containerStats.add(w.stats.getStats());
-                if(w.stats != null)
-                    state.getStatistics().containerStats.add(w.stats.getStats());
+                state.getStatistics().containerStats.add(w.stats.getStats());
+                //if(w.stats != null)
+                //    state.getStatistics().containerStats.add(w.stats.getStats());
             }
             event.messageCount += workers.size();
         } catch (InterruptedException e) {
