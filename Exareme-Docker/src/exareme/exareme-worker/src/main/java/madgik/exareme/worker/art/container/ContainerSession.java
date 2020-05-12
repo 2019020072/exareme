@@ -56,7 +56,7 @@ public class ContainerSession implements Serializable {
 //        }catch(Exception e){
 //            logger.debug("Exception ... " + e.getMessage());
 //        }
-        return null;
+        return containerProxy.getRemoteObject().execJobs(jobs);
     }
 
     public void closeSession() throws RemoteException {
