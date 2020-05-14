@@ -323,6 +323,7 @@ public class RmiContainer extends RmiRemoteObject<ContainerProxy> implements Con
                 result = jobQueueInterface.addJob(job, jobs.contSessionID, jobs.sessionID);
                 log.debug("Got job result, adding it to results.");
                 results.addJobResult(result);
+                log.debug("Returning results: " + results.getJobResults().size());
             }
 
             if (result.hasException()) {
@@ -330,7 +331,8 @@ public class RmiContainer extends RmiRemoteObject<ContainerProxy> implements Con
                 break;
             }
         }
-        log.debug("Returning results: " + results.getJobResults().size());
+        log.debug("Returning results: " + results);
+
         //byte[] data = SerializationUtils.serialize(results);
         //log.debug("data: " + data.length);
         return results;
