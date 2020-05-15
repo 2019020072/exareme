@@ -16,7 +16,7 @@ from algorithm_utils import query_with_privacy, ExaremeError, PrivacyError, PRIV
 
 from lib import DescrStatsLocal_DT, Variable, TransferVariable
 
-
+import time
 def descr_stats_local(local_in):
     # Unpack data
     var_list = local_in
@@ -46,6 +46,7 @@ def descr_stats_local(local_in):
 
 
     local_out = DescrStatsLocal_DT(transf_var_list)
+    time.sleep(100)
     return local_out
 
 

@@ -79,8 +79,6 @@ public class AdpDBArtJobMonitor implements Runnable {
                         }
                     }
                 }
-
-
             }
             updateProgressStatistics();
             statusManager.getStatistics(status.getId())
