@@ -195,7 +195,7 @@
         <repoToken>${env.REPO_TOKEN}</repoToken>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <file.encoding>UTF-8</file.encoding>
-        <javaVersion>1.7</javaVersion>
+        <javaVersion>1.8</javaVersion>
     </properties>
 
     <!-- Build Settings -->
