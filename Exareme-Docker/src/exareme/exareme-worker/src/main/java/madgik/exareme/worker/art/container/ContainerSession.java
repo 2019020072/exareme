@@ -50,7 +50,7 @@ public class ContainerSession implements Serializable {
 
     public ContainerJobResults execJobs(ContainerJobs jobs) throws RemoteException {
         logger.debug("Exec jobs");
-        TimeLimiter timeLimiter = SimpleTimeLimiter.create(Executors.newSingleThreadExecutor());
+        TimeLimiter timeLimiter = new SimpleTimeLimiter(Executors.newSingleThreadExecutor());
         logger.debug("Created time limiter");
         try{
             ContainerJobResults results = timeLimiter.callWithTimeout(() -> execJobsTask(jobs), 30, TimeUnit.SECONDS, true);
