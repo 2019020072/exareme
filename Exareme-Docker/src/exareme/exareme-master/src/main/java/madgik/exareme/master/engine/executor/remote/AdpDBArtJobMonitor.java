@@ -27,9 +27,9 @@ public class AdpDBArtJobMonitor implements Runnable {
     private static final Logger log = Logger.getLogger(AdpDBArtJobMonitor.class);
     private static final int statsUpdateSecs =
             AdpDBProperties.getAdpDBProps().getInt("db.client.statisticsUpdate_sec");
-    private static int statsOldOP = 0;
-    private static int statsOldDT = 0;
-    private static int statsOldER = 0;
+    private int statsOldOP = 0;
+    private int statsOldDT = 0;
+    private int statsOldER = 0;
 
     private final ExecutionEngineSessionPlan sessionPlan;
     private final AdpDBStatus status;
@@ -84,7 +84,9 @@ public class AdpDBArtJobMonitor implements Runnable {
                         }
                     }
                 }
-
+                if(sessionManager.hasFinished() || sessionManager.hasError() ){
+                    log.debug("Finished Session is running loop!");
+                }
             }
             updateProgressStatistics();
             statusManager.getStatistics(status.getId())
@@ -129,7 +131,7 @@ public class AdpDBArtJobMonitor implements Runnable {
 
             int errors = stats.getErrors();
             adpStats.setErrors(errors);
-            
+
             log.debug("Session ID: " + sessionPlan.getSessionID());
             log.debug("Query ID: " + queryID);
             log.debug("Updating Progress - Operators That Were Completed: " + statsOldOP + " - Operators Now Completed " + operatorsCompleted);
