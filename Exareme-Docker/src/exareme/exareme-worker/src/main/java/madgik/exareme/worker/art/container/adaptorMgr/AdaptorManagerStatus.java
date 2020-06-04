@@ -6,6 +6,8 @@ package madgik.exareme.worker.art.container.adaptorMgr;
 import madgik.exareme.utils.measurement.Measurement;
 import madgik.exareme.utils.measurement.MeasurementFactory;
 
+import java.io.Serializable;
+
 /**
  * @author Herald Kllapi<br>
  * @author Dimitris Paparas<br>
@@ -15,7 +17,7 @@ import madgik.exareme.utils.measurement.MeasurementFactory;
  * Department of Informatics and Telecommunications.
  * @since 1.0
  */
-public class AdaptorManagerStatus {
+public class AdaptorManagerStatus implements Serializable {
 
     private Measurement adaptorMeasurement = MeasurementFactory.createMeasurement("Adaptor");
     private Measurement sessionMeasurement = MeasurementFactory.createMeasurement("Session");

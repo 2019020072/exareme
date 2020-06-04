@@ -16,11 +16,14 @@ import numpy as np
 import pandas as pd
 from patsy import dmatrix, dmatrices
 
-env_type = os.environ["ENVIRONMENT_TYPE"]
-if env_type in {"DEV", "PROD"}:
+if "ENVIRONMENT_TYPE" in os.environ:
+    env_type = os.environ["ENVIRONMENT_TYPE"]
+    if env_type in {"DEV", "PROD"}:
+        PRIVACY_MAGIC_NUMBER = 10
+    elif env_type == "TEST":
+        PRIVACY_MAGIC_NUMBER = 0
+else:
     PRIVACY_MAGIC_NUMBER = 10
-elif env_type == "TEST":
-    PRIVACY_MAGIC_NUMBER = 1
 
 P_VALUE_CUTOFF = 0.001
 P_VALUE_CUTOFF_STR = "< " + str(P_VALUE_CUTOFF)
@@ -51,6 +54,11 @@ class TransferAndAggregateData(object):
                 kwargs[k] = (max(self.data[k], other.data[k]), "max")
             elif self.reduce_type[k] == "concat":
                 kwargs[k] = (np.concatenate(self.data[k], other.data[k]), "concat")
+            elif self.reduce_type[k] == "concatdict":
+                kwargs[k] = {}
+                for key in self.data[k].keys():
+                    kwargs[key] = np.concatenate(self.data[k][key], other.data[k][key])
+                kwargs[k] = (kwargs[k], "concatdict")
             elif self.reduce_type[k] == "do_nothing":
                 kwargs[k] = (self.data[k], "do_nothing")
             else:
@@ -205,16 +213,19 @@ def query_from_formula(
         )
 
     def count_query(varz):
-        return "SELECT COUNT({var}) FROM {data} WHERE ({var_clause}) AND ({ds_clause}) {flt_clause};".format(
-            var=varz[0],
-            data=data_table,
-            var_clause=" AND ".join(
-                ["{v}!='' and {v} is not null".format(v=v) for v in varz]
-            ),
-            ds_clause=" OR ".join(["dataset=='{d}'".format(d=d) for d in dataset]),
-            flt_clause=""
-            if query_filter_clause == ""
-            else "AND ({flt_clause})".format(flt_clause=query_filter_clause),
+        return (
+            "SELECT COUNT({var}) FROM {data} WHERE ({var_clause}) AND ({ds_clause})"
+            " {flt_clause};".format(
+                var=varz[0],
+                data=data_table,
+                var_clause=" AND ".join(
+                    ["{v}!='' and {v} is not null".format(v=v) for v in varz]
+                ),
+                ds_clause=" OR ".join(["dataset=='{d}'".format(d=d) for d in dataset]),
+                flt_clause=""
+                if query_filter_clause == ""
+                else "AND ({flt_clause})".format(flt_clause=query_filter_clause),
+            )
         )
 
     def data_query(varz, is_cat):
@@ -224,16 +235,19 @@ def query_from_formula(
                 for v, c in zip(varz, is_cat)
             ]
         )
-        return "SELECT {variables} FROM {data} WHERE ({var_clause}) AND ({ds_clause})  {flt_clause};".format(
-            variables=variables_casts,
-            data=data_table,
-            var_clause=" AND ".join(
-                ["{v}!='' and {v} is not null".format(v=v) for v in varz]
-            ),
-            ds_clause=" OR ".join(["dataset=='{d}'".format(d=d) for d in dataset]),
-            flt_clause=""
-            if query_filter_clause == ""
-            else "AND ({flt_clause})".format(flt_clause=query_filter_clause),
+        return (
+            "SELECT {variables} FROM {data} WHERE ({var_clause}) AND ({ds_clause}) "
+            " {flt_clause};".format(
+                variables=variables_casts,
+                data=data_table,
+                var_clause=" AND ".join(
+                    ["{v}!='' and {v} is not null".format(v=v) for v in varz]
+                ),
+                ds_clause=" OR ".join(["dataset=='{d}'".format(d=d) for d in dataset]),
+                flt_clause=""
+                if query_filter_clause == ""
+                else "AND ({flt_clause})".format(flt_clause=query_filter_clause),
+            )
         )
 
     # Perform privacy check
@@ -400,7 +414,14 @@ class StateData(object):
 
 
 def init_logger():
-    logging.basicConfig(filename="/var/log/exaremePythonAlgorithms.log")
+    if env_type == "PROD":
+        logging.basicConfig(
+            filename="/var/log/exaremePythonAlgorithms.log", level=logging.INFO
+        )
+    else:
+        logging.basicConfig(
+            filename="/var/log/exaremePythonAlgorithms.log", level=logging.DEBUG
+        )
 
 
 class Global2Local_TD(TransferData):
