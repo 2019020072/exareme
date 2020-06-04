@@ -62,6 +62,10 @@ public class AdpDBArtJobMonitor implements Runnable {
 
             while (sessionManager.hasFinished() == false && sessionManager.hasError() == false) {
                 log.debug("Session ID: " + sessionPlan.getSessionID());
+                log.debug("Query ID: " + queryID);
+                log.debug("Current Operators That Were Completed: " + statsOldOP );
+                log.debug("Current Transfer That Were Completed: " + statsOldDT );
+                log.debug("Current Errors That Were Completed: " + statsOldER );
 
                 Thread.sleep(100 * statsUpdateSecs);
                 boolean updateProgressStatistics = updateProgressStatistics();
@@ -125,7 +129,9 @@ public class AdpDBArtJobMonitor implements Runnable {
 
             int errors = stats.getErrors();
             adpStats.setErrors(errors);
-
+            
+            log.debug("Session ID: " + sessionPlan.getSessionID());
+            log.debug("Query ID: " + queryID);
             log.debug("Updating Progress - Operators That Were Completed: " + statsOldOP + " - Operators Now Completed " + operatorsCompleted);
             log.debug("Updating Progress - Transfer That Were Completed: " + statsOldDT + " - Transfers Now Completed " + transferCompleted);
             log.debug("Updating Progress - Errors That Were Completed: " + statsOldER + " - Errors Now Completed " + errors);
