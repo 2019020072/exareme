@@ -12,6 +12,7 @@ if [[ -z ${CONSULURL} ]]; then echo "CONSULURL is unset. Check docker-compose fi
 if [[ -z ${NODE_NAME} ]]; then echo "NODE_NAME is unset. Check docker-compose file.";exit;  fi
 if [[ -z ${FEDERATION_ROLE} ]]; then echo "FEDERATION_ROLE is unset. Check docker-compose file.";exit;  fi
 if [[ -z ${ENVIRONMENT_TYPE} ]]; then echo "ENVIRONMENT_TYPE is unset. Check docker-compose file.";exit;  fi
+if [[ -z ${TRANSFORM} ]]; then echo "TRANSFORM is unset. Check docker-compose file.";exit;  fi
 
 #Stop Exareme service
 stop_exareme () {
@@ -126,8 +127,11 @@ if [[ "${FEDERATION_ROLE}" != "master" ]]; then
 	MASTER_NAME=$(curl -s ${CONSULURL}/v1/kv/${EXAREME_MASTER_PATH}/?keys | jq -r '.[]' | sed "s/${EXAREME_MASTER_PATH}\///g")
 
 	#CSVs to DB
-	transformCsvToDB "worker"
-
+	if [[ "${TRANSFORM}" == "FALSE" ]]; then
+	    :
+	else
+	    transformCsvToDB "worker"
+    fi
 	. ./start-worker.sh
 	echo "Worker node["${MY_IP}","${NODE_NAME}]" trying to connect with Master node["${MASTER_IP}","${MASTER_NAME}"]"
 	while [[ ! -f /var/log/exareme.log ]]; do
@@ -216,7 +220,11 @@ else
 	done
 
 	#CSVs to DB
-	transformCsvToDB "master"
+	if [[ "${TRANSFORM}" == "FALSE" ]]; then
+	    :
+	else
+	    transformCsvToDB "master"
+    fi
 
 	#Master re-booted
 	if [[ "$(curl -s -o  /dev/null -i -w "%{http_code}\n" ${CONSULURL}/v1/kv/${EXAREME_MASTER_PATH}/?keys)" = "200" ]]; then
